@@ -74,6 +74,8 @@ def substitution_type(ref: str, hyp: str) -> str:
     """What kind of mistake is reading ref as hyp?"""
     if ref == hyp:
         return "correct"
+    if len(ref) != 1 or len(hyp) != 1:
+        return "other"
     dr, dh = decompose(ref), decompose(hyp)
     if dr is None:
         return "other"

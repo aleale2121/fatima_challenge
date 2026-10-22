@@ -24,7 +24,7 @@ def extract(item, pred):
     if t == "yesno":
         m = re.search(r"\b(yes|no)\b", pred.lower())
         return m.group(1) if m else ""
-    if t == "char":
+    if t == "char" or item["task"] == "ocr_char":
         # take the first char in the expected script, otherwise whatever came first
         same = [c for c in pred if SCRIPT_TEST[item["script"]](c) or c in "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ"]
         if same:
