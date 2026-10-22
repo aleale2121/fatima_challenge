@@ -97,7 +97,55 @@ python tokenizer_probe.py --out ../results
 python analyze.py --data ../data --results ../results
 ```
 
-Or open `fidelprobe/FidelProbe_colab.ipynb` in Colab (T4) and run all.
+Or open `fidelprobe/FidelProbe_colab.ipynb` in Colab and run all (the model step takes about 6 minutes on a Colab GPU).
+
+### What I found
+
+**1. The model cannot see Fidel at all.** Shown a single clean, printed character, it got
+**0 of 231** Ethiopic characters right, against 64% on the Korean control. Every Ethiopic answer was
+a character from a *different* script: Greek (`η` for ቢ), IPA (`ɣ` for ፉ), CJK (`丶` for ሸ), Latin (`T`
+for ፑ). Words and sentences go the same way. Not one Amharic word or line was read correctly. The
+model writes Georgian or Lao look-alike text instead and often loops, which pushes CER above 100%
+(820% on words, 356% on lines). Korean is read almost perfectly (CER 4.9% and 1.7%). Hard OCR would
+at least produce *wrong Fidel*; here the model does not recognise the script as Fidel.
+
+**2. It knows the characters as text, but not the grid.** With the seven-order scheme explained in
+the prompt, the model named the base consonant of a character only **10%** of the time (Korean: 41%)
+and the vowel order **21%** of the time (chance is 14%; Korean: 49%). How it fails is the
+interesting part: in about six of ten base-consonant errors it gives **the right consonant in the
+wrong vowel form**, e.g. ቁ for ቀ, ጩ for ጨ, ቹ for ቸ, ፊ for ፈ. That is exactly the vowel-form
+confusion the Fidel OCR benchmark reports for dedicated recognisers. Here it shows up in a pure
+text task, with no image involved.
+
+**3. Building characters fails in both scripts, but differently.** `compose` and `transform` are near
+0% for Ethiopic *and* Korean, so on their own they say "a 2B model is bad at numbered composition
+rules", not "Ethiopic is special". The errors still differ. For Ethiopic `compose`, 202 of 224 wrong
+answers are the Latin vowel itself (`a`, `u`, `ə`) instead of a Fidel character. In `transform`, when
+the model does stay in Fidel, most errors (80 of 125) keep the consonant and land on the wrong
+vowel form. Korean errors are bare vowel letters (`ㅡ`, `ㅐ`).
+
+**4. Vowel-form changes slip past it.** Asked whether two words are spelled the same, the model
+missed a single changed **vowel form in 13.5%** of Amharic pairs, against **2.1%** for a changed
+consonant. That is over six times more often. In Korean it caught every vowel change. A model that
+cannot reliably tell ሰበረ "he broke" from ሰበሩ "they broke" cannot proofread Amharic.
+
+**5. The tokenizer hides the structure.** Only 108 of the 231 core characters are a single token.
+The rest are split into byte pieces. The seven forms of a consonant share a token for only 3 of 33
+consonants, and even then the shared piece is a byte prefix common to *many* consonants, not the
+consonant itself. Amharic text costs 1.28 tokens per character, about 5× English. Nothing at the
+input layer tells the model that ቡ and ቦ are related.
+
+**Taken together:** the model treats Fidel as a set of rare, unrelated symbols. It cannot see the
+script, it does not know that each character is a consonant plus a vowel order, and when it gets
+close it gets the vowel order wrong. The Korean control shows this is not a property of syllabic
+scripts in general.
+
+**Limitations.** One 2B model, greedy decoding, English instructions, and clean rendered text in a
+single font (a best case: handwriting would only be harder). The symbolic tasks depend on the model
+following a scheme described in the prompt, which the Korean results show is hard for a 2B model
+anyway. I report the Korean numbers next to every Ethiopic number for that reason. The numbers
+below are from the Colab GPU run. A CPU run of the text tasks gave the same picture (within about
+3 points).
 
 <!-- RESULTS -->
 
