@@ -1,7 +1,4 @@
-"""Score FidelProbe predictions and write tables + figures.
-
-  python analyze.py --data ../data --results ../results
-"""
+"""Scores the predictions and writes summary json, a markdown table and plots."""
 import argparse
 import json
 import re
@@ -28,7 +25,7 @@ def extract(item, pred):
         m = re.search(r"\b(yes|no)\b", pred.lower())
         return m.group(1) if m else ""
     if t == "char":
-        # first character of the expected script, else the first non-space character
+        # take the first char in the expected script, otherwise whatever came first
         same = [c for c in pred if SCRIPT_TEST[item["script"]](c) or c in "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ"]
         if same:
             return same[0]
@@ -117,8 +114,7 @@ def fig_task_bars(S, path):
 
 
 def fig_order_confusion(rows, path):
-    """7x7 confusion over vowel orders for Ethiopic single-character OCR, restricted
-    to answers with the correct consonant."""
+    """Vowel-order confusion for single-character OCR, only where the consonant was right."""
     M = [[0] * 7 for _ in range(7)]
     for r in rows:
         if r["task"] != "ocr_char" or r["script"] != "eth" or not r["answer"]:

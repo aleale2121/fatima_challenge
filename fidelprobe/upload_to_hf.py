@@ -1,14 +1,4 @@
-"""Create a public Hugging Face Bucket and upload every FidelProbe artifact.
-
-Bucket layout:
-  README.md            answers to Q1 and Q3 + results tables
-  fidelprobe/          code + Colab notebook
-  data/                probes.jsonl + rendered images
-  results/             raw predictions, scored predictions, summaries, figures
-  model/               copy of the evaluated model weights (skip with --no-model)
-
-  HF_TOKEN=hf_... python upload_to_hf.py --bucket fidelprobe
-"""
+"""Creates the public HF bucket and uploads README, code, data, results and the model."""
 import argparse
 import shutil
 import tempfile

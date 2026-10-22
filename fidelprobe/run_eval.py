@@ -1,9 +1,6 @@
-"""Run FidelProbe against a Hugging Face vision-language model.
+"""Runs a VLM over probes.jsonl with greedy decoding.
 
-Greedy decoding, one item at a time, resumable (already-answered ids are
-skipped). Works on CPU, a Colab T4, or Modal.
-
-  python run_eval.py --model Qwen/Qwen3-VL-2B-Instruct --data ../data --out ../results
+Answers are appended as they come, so a crashed run picks up where it stopped.
 """
 import argparse
 import json
@@ -37,7 +34,7 @@ def generate(model, proc, item, data_dir):
     msgs = [{"role": "system", "content": [{"type": "text", "text": SYSTEM}]},
             {"role": "user", "content": content},
             {"role": "assistant", "content": [{"type": "text", "text": "Answer:"}]}]
-    # Prefill "Answer:" so the model commits to an answer instead of restating the question.
+    # without the "Answer:" prefill the 2B model tends to restate the question
     inputs = proc.apply_chat_template(msgs, tokenize=True, continue_final_message=True,
                                       return_dict=True, return_tensors="pt").to(model.device)
     out = model.generate(**inputs, max_new_tokens=MAX_NEW[item["answer_type"]], do_sample=False)

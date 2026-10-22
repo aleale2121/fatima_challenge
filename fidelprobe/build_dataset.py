@@ -1,12 +1,7 @@
-"""Build the FidelProbe evaluation set.
+"""Builds the probe set: probes.jsonl plus the rendered images.
 
-Every item has a deterministic gold answer derived from Unicode arithmetic,
-and every Ethiopic task has a matched Hangul control (another compositional
-consonant+vowel script that is far better represented in training data).
-
-Outputs (under --out):
-  probes.jsonl   one item per line
-  images/*.png   rendered stimuli for the visual tasks
+Gold answers come from the Unicode layout, so nothing is hand-labelled.
+Each Ethiopic task has a Korean twin to compare against.
 """
 import argparse
 import json
@@ -23,7 +18,7 @@ ETH_FONT = "/usr/share/fonts/truetype/noto/NotoSansEthiopic-Regular.ttf"
 ETH_FONT_ALT = "/usr/share/fonts/truetype/abyssinica/AbyssinicaSIL-Regular.ttf"
 KOR_FONT = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 
-# Common Amharic words (everyday vocabulary).
+# everyday Amharic words
 AMHARIC_WORDS = """ሰላም ኢትዮጵያ አዲስ አበባ ቤት ውሃ ዳቦ ቡና ትምህርት መጽሐፍ ልጅ እናት አባት ወንድም
 እህት ሀገር ከተማ መንገድ መኪና ገበያ ገንዘብ ስራ ጊዜ ቀን ሌሊት ፀሐይ ጨረቃ ኮከብ ዝናብ ተራራ
 ወንዝ ባሕር ዛፍ ፍቅር ሰው ሴት ወንድ ቤተሰብ ምግብ እንጀራ ወጥ ሻይ ወተት ማር ጨው በርበሬ
@@ -38,7 +33,7 @@ KOREAN_WORDS = """안녕 사랑 학교 친구 가족 어머니 아버지 나무 
 작다 감사합니다 미안합니다 대학교 도서관 시장 돈 일 이름 나라 언어 역사 바람 구름 비
 눈 산 강 길 문 집 방 창문 의자 신문 편지 질문 대답 숫자 글자 단어 주 달 해""".split()
 
-# Short Amharic sentences for line-level OCR (rendered, so gold is exact).
+# short sentences for the line OCR task
 AMHARIC_LINES = [
     "ሰላም እንዴት ነህ?", "አዲስ አበባ የኢትዮጵያ ዋና ከተማ ናት።", "ቡና መጠጣት እወዳለሁ።",
     "ልጆቹ ትምህርት ቤት ሄዱ።", "ዛሬ ዝናብ ይዘንባል።", "እናቴ እንጀራ ጋገረች።",
@@ -110,7 +105,7 @@ def text_char_probes(rng):
 
 
 def flip(word, script, kind, rng):
-    """Change one syllable's vowel (kind='vowel') or consonant (kind='consonant')."""
+    """Swap the vowel or the consonant of one random syllable in the word."""
     base_rows = [(ord(b) - 0x1200) // 8 for b in ETH_BASES]
     idx = [i for i, c in enumerate(word) if decompose(c) and
            (script != "eth" or ((ord(c) - 0x1200) // 8 in base_rows and (ord(c) - 0x1200) % 8 < 7))]

@@ -1,11 +1,7 @@
-"""How does the model's tokenizer see the Fidel grid?
+"""Checks how the tokenizer splits Fidel characters.
 
-For each of the 231 core Ethiopic characters (and the 133 Hangul controls) we
-record how many tokens it costs and whether its tokens are shared with other
-forms of the same consonant (i.e. whether the consonant identity is visible
-to the model at the input layer at all).
-
-  python tokenizer_probe.py --model Qwen/Qwen3-VL-2B-Instruct --out ../results
+If the seven forms of a consonant never share a token, the model has no
+direct way to tell from its input that ቡ and ቦ are the same consonant.
 """
 import argparse
 import json
@@ -17,7 +13,7 @@ from transformers import AutoTokenizer
 from build_dataset import AMHARIC_LINES, KOREAN_LINES
 from scripts import eth_core_chars, hangul_core_chars
 
-ENGLISH_LINES = [  # meaning-matched to a sample of the Amharic lines
+ENGLISH_LINES = [  # translations of the first few Amharic lines
     "Hello, how are you?", "Addis Ababa is the capital city of Ethiopia.", "I love drinking coffee.",
     "The children went to school.", "It will rain today.", "My mother baked injera.",
 ]
@@ -37,7 +33,7 @@ def main():
         by_base = defaultdict(list)
         for ch, base, _ in chars:
             by_base[base].append(ids[ch])
-        # a consonant is "visible" if all its forms share at least one token id
+        # does every form of this consonant share at least one token?
         shared = sum(bool(set.intersection(*[set(x) for x in forms])) for forms in by_base.values())
         report[script] = {
             "n_chars": len(chars),
